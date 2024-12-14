@@ -30,7 +30,13 @@ keep_tmp=false
 sort_data=false
 debug=false
 
-# Gestion des options
+# Si un quatrième argument est fourni, c'est l'ID de centrale
+if [[ $# -gt 0 && "$1" =~ ^[0-9]+$ ]]; then
+    id_centrale="$1"
+    shift
+fi
+
+# Gestion des options restantes
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --keep-tmp) keep_tmp=true ;;
@@ -40,6 +46,7 @@ while [[ $# -gt 0 ]]; do
     esac
     shift
 done
+
 
 # Vérification du fichier d'entrée
 if [[ ! -f "$chemin_dat" ]]; then
