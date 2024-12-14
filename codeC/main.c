@@ -9,13 +9,19 @@
 
 int main(int argc, char *argv[]) {
     if (DEBUG) {
-    printf("DEBUG: argc = %d\n", argc);
-    for (int i = 0; i < argc; i++) {
-        printf("DEBUG: argv[%d] = '%s'\n", i, argv[i]);
-     }
-   }
+        printf("DEBUG: argc = %d\n", argc);
+        for (int i = 0; i < argc; i++) {
+            printf("DEBUG: argv[%d] = '%s'\n", i, argv[i]);
+        }
+    }
 
     if (argc != 4) {
+        fprintf(stderr, "Erreur : Nombre d'arguments incorrect : %d\n", argc);
+        fprintf(stderr, "DEBUG: Arguments fournis : ");
+        for (int i = 0; i < argc; i++) {
+            fprintf(stderr, "'%s' ", argv[i]);
+        }
+        fprintf(stderr, "\n");
         fprintf(stderr, "Usage: %s <fichier_entree.dat> <fichier_sortie.dat> <has_header>\n", argv[0]);
         return EXIT_FAILURE;
     }
@@ -24,28 +30,23 @@ int main(int argc, char *argv[]) {
     const char *fichier_sortie = argv[2];
     int has_header = atoi(argv[3]);
 
-    if (access(fichier_entree, F_OK) != 0) {
-    perror("Erreur : Le fichier d'entrée est inaccessible");
-    return EXIT_FAILURE;
-   }
-    if (DEBUG) printf("DEBUG : Le fichier d'entrée est accessible : %s\n", fichier_entree);
-
     if (DEBUG) {
-        printf("DEBUG: Fichier d'entrée : %s\n", fichier_entree);
-        printf("DEBUG: Fichier de sortie : %s\n", fichier_sortie);
-        printf("DEBUG: Has header : %d\n", has_header);
+        printf("DEBUG: Chemin d'entrée reçu : '%s'\n", fichier_entree);
+        for (size_t i = 0; i < strlen(fichier_entree); i++) {
+            printf("DEBUG: fichier_entree[%zu] = '%c' (ASCII: %d)\n", i, fichier_entree[i], fichier_entree[i]);
+        }
     }
 
-    FILE *test_file = fopen(fichier_entree, "r");
-    if (!test_file) {
-        perror("Erreur d'ouverture du fichier d'entrée");
+    if (access(fichier_entree, F_OK) != 0) {
+        perror("Erreur : Le fichier d'entrée est inaccessible");
+        fprintf(stderr, "DEBUG: Chemin testé : %s\n", fichier_entree);
         return EXIT_FAILURE;
     }
-    fclose(test_file);
+
+    if (DEBUG) printf("DEBUG: Fichier d'entrée accessible : %s\n", fichier_entree);
 
     // Charger les données dans l'arbre AVL
     NoeudAVL *arbre = charger_dat_dans_avl(fichier_entree, has_header);
-
     if (!arbre) {
         fprintf(stderr, "Erreur : Arbre AVL non généré à partir de %s\n", fichier_entree);
         return EXIT_FAILURE;

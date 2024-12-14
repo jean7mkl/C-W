@@ -20,7 +20,7 @@ if [[ $# -lt 3 ]]; then
     exit 1
 fi
 
-chemin_dat="$1"
+chemin_dat=$(realpath "$1")
 type_station="$2"
 type_consommateur="$3"
 shift 3
@@ -62,8 +62,10 @@ awk -F';' '
 # Filtrage selon les critères
 arg_fus="$type_station $type_consommateur"
 
+
 case "$arg_fus" in
 	"hvb comp")
+    echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);(\d+);-;-;-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);(\d+);-;-;(\d+);-;-;(\d+)" $chemin_dat)
@@ -73,6 +75,7 @@ case "$arg_fus" in
 	fi
 	;;
 	"hva comp")
+    echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);(\d+);(\d+);-;-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);-;(\d+);-;(\d+);-;-;(\d+)" $chemin_dat)
@@ -82,6 +85,7 @@ case "$arg_fus" in
 	fi
 	;;
 	"lv comp")
+    echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
@@ -91,6 +95,7 @@ case "$arg_fus" in
 	fi
 	;;
 	"lv indiv")
+    echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
@@ -100,6 +105,7 @@ case "$arg_fus" in
 	fi
 	;;
 	"lv all")
+    echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers_1=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
@@ -126,12 +132,6 @@ fi
 
 echo "Filtrage terminé avec succès. Les résultats sont dans $fichier_filtre."
 
-# Option de tri
-if [[ "$sort_data" == true ]]; then
-    echo "Tri des données par capacité décroissante..."
-    sort -t';' -k7,7nr "$fichier_filtre" -o "$fichier_filtre"
-fi
-
 # Compilation des fichiers C
 if [[ ! -f main ]]; then
     echo "Compilation du programme C..."
@@ -145,16 +145,17 @@ if [[ ! -f main ]]; then
     fi
 fi
 
-# Conversion en chemin absolu
-fichier_filtre_abs=$(readlink -f "$fichier_filtre")
-output_file_abs=$(readlink -f "output.dat")
+fichier_filtre_abs=$(realpath "$fichier_filtre")
+output_file_abs=$(realpath "output.dat")
 
 if [[ "$debug" == true ]]; then
+    echo "DEBUG: Chemin absolu du fichier d'entrée : $fichier_filtre_abs"
+    echo "DEBUG: Chemin absolu du fichier de sortie : $output_file_abs"
     echo "DEBUG: Appel de ./main avec : ./main \"$fichier_filtre_abs\" \"$output_file_abs\" 1"
 fi
 
+# Appel de l'exécutable
 ./main "$fichier_filtre_abs" "$output_file_abs" 1
-
 retour_main=$?
 
 # Gestion du fichier de sortie

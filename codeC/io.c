@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <unistd.h>
 
 
 #include "avl.h"
@@ -12,16 +12,21 @@
 
 
 NoeudAVL *charger_dat_dans_avl(const char *nom_fichier, int has_header) {
-    if (DEBUG) printf("DEBUG: Lecture du fichier d'entrée : %s\n", nom_fichier);
+    if (access(nom_fichier, F_OK) != 0) {
+    perror("Erreur d'accès au fichier");
+    fprintf(stderr, "DEBUG: Le fichier est inaccessible ou n'existe pas : %s\n", nom_fichier);
+    return NULL;
+  }
 
     FILE *fichier = fopen(nom_fichier, "r");
     if (!fichier) {
     perror("Erreur lors de l'ouverture du fichier d'entrée");
     fprintf(stderr, "DEBUG: Fichier tenté : %s\n", nom_fichier);
     return NULL;
-    }
+  }
 
-    if (DEBUG) printf("DEBUG: Fichier ouvert avec succès : %s\n", nom_fichier);
+    fprintf(stderr, "DEBUG: Fichier ouvert avec succès : %s\n", nom_fichier);
+
 
     char ligne[1024]; // Augmenté la taille pour gérer des lignes plus longues
     NoeudAVL *racine = NULL;
