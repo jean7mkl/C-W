@@ -1,16 +1,19 @@
-all: main
+CC = gcc
+CFLAGS = -Wall -Wextra -g
+OBJ = main.o avl.o io.o
+TARGET = main
 
-main: main.o avl.o io.o
-	gcc -o main main.o avl.o io.o
+all: directories $(TARGET)
 
-main.o: main.c
-	gcc -Wall -Wextra -pedantic -std=c99 -c main.c -o main.o
+$(TARGET): $(OBJ)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJ)
 
-avl.o: avl.c
-	gcc -Wall -Wextra -pedantic -std=c99 -c avl.c -o avl.o
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
-io.o: io.c
-	gcc -Wall -Wextra -pedantic -std=c99 -c io.c -o io.o
+directories:
+	mkdir -p output tmp
 
 clean:
-	rm -f *.o main
+	rm -f $(OBJ) $(TARGET)
+	rm -rf tmp output
