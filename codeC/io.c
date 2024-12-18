@@ -33,68 +33,60 @@ NoeudAVL *charger_dat_dans_avl(const char *nom_fichier, const char *filter_type)
 
     while (fgets(ligne, sizeof(ligne), fichier)) {
         RemplacerTiretParZero(ligne);
-        if (DEBUG) printf("DEBUG: Ligne lue = '%s'\n", ligne);
+        //if (DEBUG) printf("DEBUG: Ligne lue = %s\n", ligne);
 
         char station_id[256] = {0};
         char station_type[16] = {0};
         long capacity = 0, load = 0;
 
-        if (strcmp(filter_type, "hvb") == 0) {
-            if (DEBUG) printf("DEBUG: Filtre HVB activé.\n");
-            if (sscanf(ligne, "%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
-                strcpy(station_type, "HVB");
-                if (DEBUG) printf("DEBUG: Ligne HVB valide. ID: %s, Capacity: %ld, Load: %ld\n", station_id, capacity, load);
-            } else {
-                if (DEBUG) printf("DEBUG: Ligne HVB ignorée : '%s'\n", ligne);
-                continue;
-            }
-        } else if (strcmp(filter_type, "hva") == 0) {
-            if (DEBUG) printf("DEBUG: Filtre HVA activé.\n");
-            if (sscanf(ligne, "%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
-                strcpy(station_type, "HVA");
-                if (DEBUG) printf("DEBUG: Ligne HVA valide. ID: %s, Capacity: %ld, Load: %ld\n", station_id, capacity, load);
-            } else {
-                if (DEBUG) printf("DEBUG: Ligne HVA ignorée : '%s'\n", ligne);
-                continue;
-            }
-        } else if (strcmp(filter_type, "lv") == 0) {
-            if (DEBUG) printf("DEBUG: Filtre LV activé.\n");
-            if (sscanf(ligne, "%*[^;];%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
-                strcpy(station_type, "LV");
-                if (DEBUG) printf("DEBUG: Ligne LV valide. ID: %s, Capacity: %ld, Load: %ld\n", station_id, capacity, load);
-            } else {
-                if (DEBUG) printf("DEBUG: Ligne LV ignorée : '%s'\n", ligne);
-                continue;
-            }
-        } else {
-            if (DEBUG) printf("DEBUG: Type de filtre inconnu : '%s'. Ligne ignorée : '%s'\n", filter_type, ligne);
-            continue;
-        }
+        // Filtrage des types de stations
+if (strcmp(filter_type, "hvb") == 0) {
+    if (sscanf(ligne, "%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
+        strcpy(station_type, "HVB");
+    } else {
+        continue; // Ligne mal formatée, on l'ignore
+    }
+} else if (strcmp(filter_type, "hva") == 0) {
+    if (sscanf(ligne, "%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
+        strcpy(station_type, "HVA");
+    } else {
+        continue; // Ligne mal formatée, on l'ignore
+    }
+} else if (strcmp(filter_type, "lv") == 0) {
+    if (sscanf(ligne, "%*[^;];%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
+        strcpy(station_type, "LV");
+    } else {
+        continue; // Ligne mal formatée, on l'ignore
+    }
+} else {
+    continue; // Type de filtre inconnu
+}
 
-        // Vérifiez si la ligne contient des données valides
-        if (capacity > 0 || load > 0) {
-            Donnees *donnee = malloc(sizeof(Donnees));
-            if (!donnee) {
-                perror("Erreur d'allocation mémoire");
-                fclose(fichier);
-                return racine;
-            }
+// Vérifier si la ligne contient des données valides
+if (capacity > 0 || load > 0) {
+    // Créer une nouvelle donnée pour l'AVL
+    Donnees *donnee = malloc(sizeof(Donnees));
+    if (!donnee) {
+        perror("Erreur d'allocation mémoire");
+        fclose(fichier);
+        return racine;
+    }
 
-            donnee->station_type = strdup(station_type);
-            donnee->station_id = strdup(station_id);
-            donnee->total_capacity = capacity;
-            donnee->total_load = load;
+    donnee->station_type = strdup(station_type);
+    donnee->station_id = strdup(station_id);
+    donnee->total_capacity = capacity;
+    donnee->total_load = load;
 
-            racine = inserer_avl(racine, station_id, donnee);
-            if (DEBUG) printf("DEBUG: Donnée insérée dans AVL : ID: %s, Capacity: %ld, Load: %ld\n", station_id, capacity, load);
-        } else {
-            if (DEBUG) printf("DEBUG: Données invalides ou vides. Ligne ignorée : '%s'\n", ligne);
-        }
+    // Insérer ou mettre à jour le nœud AVL
+    racine = inserer_avl(racine, station_id, donnee);
+}
+
     }
 
     fclose(fichier);
     return racine;
 }
+
 
 
 

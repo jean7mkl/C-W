@@ -56,7 +56,7 @@ fi
 
 # Préparation des fichiers temporaires
 mkdir -p tmp
-fichier_filtre="tmp/filtered.dat"
+fichier_filtre="tmp/filtered.txt"
 
 # Validation et nettoyage du fichier
 echo "Validation et nettoyage du fichier d'entrée..."
@@ -76,9 +76,11 @@ case "$arg_fus" in
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);(\d+);-;-;-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);(\d+);-;-;(\d+);-;-;(\d+)" $chemin_dat)
+		filtre_type="hvb"
 	else
 		station=$(grep  -P "^($id_centrale);(\d+);-;-;-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^($id_centrale);(\d+);-;-;(\d+);-;-;(\d+)" $chemin_dat)
+		filtre_type="hvb"
 	fi
 	;;
 	"hva comp")
@@ -86,9 +88,11 @@ case "$arg_fus" in
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);(\d+);(\d+);-;-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);-;(\d+);-;(\d+);-;-;(\d+)" $chemin_dat)
+		filtre_type="hva"
 	else
 		station=$(grep  -P "^($id_centrale);(\d+);(\d+);-;-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^($id_centrale);-;(\d+);-;(\d+);-;-;(\d+)" $chemin_dat)
+		filtre_type="hva"
 	fi
 	;;
 	"lv comp")
@@ -96,9 +100,11 @@ case "$arg_fus" in
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
+		filtre_type="lv"
 	else
 		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
+		filtre_type="lv"
 	fi
 	;;
 	"lv indiv")
@@ -106,9 +112,11 @@ case "$arg_fus" in
 	if [ -z "$id_centrale" ]; then
 		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+		filtre_type="lv"
 	else 
 		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+		filtre_type="lv"
 	fi
 	;;
 	"lv all")
@@ -117,10 +125,12 @@ case "$arg_fus" in
 		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers_1=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
 		usagers_2=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+		filtre_type="lv"
 	else
 		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
 		usagers_1=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
 		usagers_2=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+		filtre_type="lv"
 	fi
 	usagers="$usagers_1$'\n'$usagers_2"
 	;;
@@ -142,10 +152,9 @@ echo "Filtrage terminé avec succès. Les résultats sont dans $fichier_filtre."
 # Compilation des fichiers C
 if [[ ! -f main ]]; then
     echo "Compilation du programme C..."
-    gcc -c avl.c -o avl.o
-    gcc -c io.c -o io.o
-    gcc -c main.c -o main.o
-    gcc -o main avl.o io.o main.o
+    cd codeC
+    make
+    cd ..
     if [[ $? -ne 0 ]]; then
         echo "Erreur : Compilation échouée."
         exit 1
@@ -162,7 +171,8 @@ if [[ "$debug" == true ]]; then
 fi
 
 # Appel de l'exécutable
-./main "$fichier_filtre_abs" "$output_file_abs" 1
+EXECUTABLE="codeC/main"
+./$EXECUTABLE "$fichier_filtre_abs" "$output_file_abs" "$filtre_type" 
 retour_main=$?
 
 # Gestion du fichier de sortie
