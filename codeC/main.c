@@ -17,21 +17,23 @@ int main(int argc, char *argv[]) {
 
     // Vérification du nombre d'arguments
     if (argc != 4) {
-    fprintf(stderr, "Erreur : Nombre d'arguments incorrect : %d\n", argc);
-    fprintf(stderr, "Usage: %s <fichier_entree.dat> <fichier_sortie.dat> <filter_type>\n", argv[0]);
-    return EXIT_FAILURE;
-   }
-
-
-    // Récupération des arguments
-    const char *fichier_entree = argv[1];
-    if (DEBUG) {
-    printf("DEBUG: fichier_entree = '%s'\n", fichier_entree);
+        fprintf(stderr, "Erreur : Nombre d'arguments incorrect : %d\n", argc);
+        fprintf(stderr, "Usage: %s <fichier_entree.dat> <fichier_sortie.dat> <filter_type>\n", argv[0]);
+        return EXIT_FAILURE;
     }
 
+    // Affectation des arguments aux variables
+    const char *fichier_entree = argv[1];
     const char *fichier_sortie = argv[2];
-    //int has_header = atoi(argv[3]);
-    const char *filter_type = argv[3]; // Correct pour argc = 4
+    const char *filter_type = argv[3];
+
+    if (DEBUG) {
+        printf("DEBUG: Chemin d'entrée : %s\n", fichier_entree);
+        printf("DEBUG: Chemin de sortie : %s\n", fichier_sortie);
+        printf("DEBUG: Type de filtre : %s\n", filter_type);
+    }
+
+
     if (filter_type == NULL || strlen(filter_type) == 0) {
     fprintf(stderr, "Erreur : Filter type est NULL ou vide.\n");
     return EXIT_FAILURE;
