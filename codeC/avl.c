@@ -74,7 +74,7 @@ static int facteur_equilibre(NoeudAVL *N) {
 }
 
 
-static void ajouter_valeur(NoeudAVL *noeud, Donnees *valeur) {
+/* static void ajouter_valeur(NoeudAVL *noeud, Donnees *valeur) {
     if (noeud->taille == noeud->capacite) {
         noeud->capacite *= 2;
         noeud->valeurs = realloc(noeud->valeurs, noeud->capacite * sizeof(Donnees *));
@@ -84,49 +84,41 @@ static void ajouter_valeur(NoeudAVL *noeud, Donnees *valeur) {
         }
     }
     noeud->valeurs[noeud->taille++] = valeur;
-}
+}*/
 
 
 
 
 NoeudAVL *inserer_avl(NoeudAVL *noeud, const char *cle, Donnees *valeur) {
-    if (DEBUG) printf("DEBUG: Insertion de la clé : %s\n", cle);
-
     if (noeud == NULL) {
-        if (DEBUG) printf("DEBUG: Nouveau nœud créé pour la clé : %s\n", cle);
         return nouveau_noeud(cle, valeur);
     }
 
     if (strcmp(cle, noeud->cle) < 0) {
-        if (DEBUG) printf("DEBUG: Insertion à gauche pour la clé : %s\n", cle);
         noeud->gauche = inserer_avl(noeud->gauche, cle, valeur);
     } else if (strcmp(cle, noeud->cle) > 0) {
-        if (DEBUG) printf("DEBUG: Insertion à droite pour la clé : %s\n", cle);
         noeud->droite = inserer_avl(noeud->droite, cle, valeur);
     } else {
-        if (DEBUG) printf("DEBUG: Clé dupliquée, ajout de la valeur au tableau pour la clé : %s\n", cle);
-        ajouter_valeur(noeud, valeur);
+        // Mise à jour du nœud existant
+        noeud->valeurs[0]->total_capacity += valeur->total_capacity;
+        noeud->valeurs[0]->total_load += valeur->total_load;
+        free(valeur->station_id);
+        free(valeur->station_type);
+        free(valeur);
         return noeud;
     }
 
     noeud->hauteur = 1 + max(hauteur(noeud->gauche), hauteur(noeud->droite));
     int balance = facteur_equilibre(noeud);
 
-    if (balance > 1 && strcmp(cle, noeud->gauche->cle) < 0) {
-        if (DEBUG) printf("DEBUG: Rotation droite pour équilibrer.\n");
-        return rotation_droite(noeud);
-    }
-    if (balance < -1 && strcmp(cle, noeud->droite->cle) > 0) {
-        if (DEBUG) printf("DEBUG: Rotation gauche pour équilibrer.\n");
-        return rotation_gauche(noeud);
-    }
+    // Équilibrage de l'AVL
+    if (balance > 1 && strcmp(cle, noeud->gauche->cle) < 0) return rotation_droite(noeud);
+    if (balance < -1 && strcmp(cle, noeud->droite->cle) > 0) return rotation_gauche(noeud);
     if (balance > 1 && strcmp(cle, noeud->gauche->cle) > 0) {
-        if (DEBUG) printf("DEBUG: Double rotation gauche-droite pour équilibrer.\n");
         noeud->gauche = rotation_gauche(noeud->gauche);
         return rotation_droite(noeud);
     }
     if (balance < -1 && strcmp(cle, noeud->droite->cle) < 0) {
-        if (DEBUG) printf("DEBUG: Double rotation droite-gauche pour équilibrer.\n");
         noeud->droite = rotation_droite(noeud->droite);
         return rotation_gauche(noeud);
     }
@@ -134,31 +126,33 @@ NoeudAVL *inserer_avl(NoeudAVL *noeud, const char *cle, Donnees *valeur) {
     return noeud;
 }
 
+
 void afficher_avl(NoeudAVL *racine) {
     if (racine != NULL) {
         afficher_avl(racine->gauche);
         printf("Clé : %s, Taille : %d\n", racine->cle, racine->taille);
         for (int i = 0; i < racine->taille; i++) {
-            printf("  Donnée %d - Capacity: %ld, Load: %ld\n", i + 1, racine->valeurs[i]->capacity, racine->valeurs[i]->load);
+            printf("  Donnée %d - Capacity: %ld, Load: %ld\n", i + 1, racine->valeurs[i]->total_capacity, racine->valeurs[i]->total_load);
         }
         afficher_avl(racine->droite);
     }
 }
 
-long somme_avl(NoeudAVL *racine) {
+ long somme_avl(NoeudAVL *racine) {
     if (racine == NULL) return 0;
     long somme = 0;
     for (int i = 0; i < racine->taille; i++) {
-        somme += racine->valeurs[i]->capacity;
+        somme += racine->valeurs[i]->total_capacity;
     }
     return somme + somme_avl(racine->gauche) + somme_avl(racine->droite);
 }
+
 
 long somme_loads(NoeudAVL *racine) {
     if (racine == NULL) return 0;
     long somme = 0;
     for (int i = 0; i < racine->taille; i++) {
-        somme += racine->valeurs[i]->load;
+        somme += racine->valeurs[i]->total_load;
     }
     return somme + somme_loads(racine->gauche) + somme_loads(racine->droite);
 }
@@ -173,10 +167,10 @@ void liberer_avl(NoeudAVL *racine) {
         if (racine->valeurs) {
             for (int i = 0; i < racine->taille; i++) {
                 if (racine->valeurs[i]) {
-                    if (racine->valeurs[i]->power_plant) {
+                    /*if (racine->valeurs[i]->power_plant) {
                         free((char *)racine->valeurs[i]->power_plant);
                         racine->valeurs[i]->power_plant = NULL;
-                    }
+                    }*/
                     free(racine->valeurs[i]);
                     racine->valeurs[i] = NULL;
                 }

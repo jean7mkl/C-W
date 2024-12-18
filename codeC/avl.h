@@ -4,14 +4,10 @@
 #include <stdlib.h>
 
 typedef struct Donnees {
-    const char *power_plant;
-    const char *hvb_station;
-    const char *hva_station;
-    const char *lv_station;
-    const char *company;
-    const char *individual;
-    long capacity;
-    long load;
+    char *station_type;  // Type de station (HVB, HVA, LV)
+    char *station_id;    // ID de la station
+    long total_capacity; // Capacité totale de la station
+    long total_load;     // Charge totale de la station
 } Donnees;
 
 typedef struct NoeudAVL {

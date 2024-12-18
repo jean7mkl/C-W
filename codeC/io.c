@@ -31,63 +31,57 @@ NoeudAVL *charger_dat_dans_avl(const char *nom_fichier, const char *filter_type)
     char ligne[1024];
     NoeudAVL *racine = NULL;
 
-    /*if (has_header) {
-        fgets(ligne, sizeof(ligne), fichier); // Ignorer l'en-tête
-        if (DEBUG) printf("DEBUG: En-tête ignoré : %s\n", ligne);
-    }*/
-
     while (fgets(ligne, sizeof(ligne), fichier)) {
         RemplacerTiretParZero(ligne);
+        if (DEBUG) printf("DEBUG: Ligne lue = %s\n", ligne);
 
-        char cle[256] = {0};
+        char station_id[256] = {0};
+        char station_type[16] = {0};
         long capacity = 0, load = 0;
-        int champs_extraits = 0;
 
-        // Appliquer le filtre en fonction du type
-        if (strcmp(filter_type, "hvb comp") == 0) {
-            champs_extraits = sscanf(ligne, "%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
-        } else if (strcmp(filter_type, "hva comp") == 0) {
-            champs_extraits = sscanf(ligne, "%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
-        } else if (strcmp(filter_type, "lv comp") == 0) {
-            champs_extraits = sscanf(ligne, "%*[^;];%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
-        } else if (strcmp(filter_type, "company") == 0) {
-            champs_extraits = sscanf(ligne, "%*[^;];%*[^;];%*[^;];%*[^;];%255[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
-        } else {
-            fprintf(stderr, "DEBUG: Type de filtre inconnu : %s\n", filter_type);
-            continue;
-        }
+        // Filtrage des types de stations
+if (strcmp(filter_type, "hvb") == 0) {
+    if (sscanf(ligne, "%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
+        strcpy(station_type, "HVB");
+    } else {
+        continue; // Ligne mal formatée, on l'ignore
+    }
+} else if (strcmp(filter_type, "hva") == 0) {
+    if (sscanf(ligne, "%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
+        strcpy(station_type, "HVA");
+    } else {
+        continue; // Ligne mal formatée, on l'ignore
+    }
+} else if (strcmp(filter_type, "lv") == 0) {
+    if (sscanf(ligne, "%*[^;];%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%ld;%ld", station_id, &capacity, &load) == 3) {
+        strcpy(station_type, "LV");
+    } else {
+        continue; // Ligne mal formatée, on l'ignore
+    }
+} else {
+    continue; // Type de filtre inconnu
+}
 
-        if (DEBUG) {
-            printf("DEBUG: Ligne = %s\n", ligne);
-            printf("DEBUG: Champs extraits = %d, Clé = '%s', Capacity = %ld, Load = %ld\n", 
-                   champs_extraits, cle, capacity, load);
-        }
-
-        // Inclure uniquement les lignes avec des valeurs significatives
-        if (champs_extraits >= 3 && (capacity != 0 || load != 0)) {
-            // Créer une nouvelle entrée pour l'AVL
-            Donnees *valeur = (Donnees *)malloc(sizeof(Donnees));
-            if (!valeur) {
-                perror("Erreur d'allocation mémoire");
-                fclose(fichier);
-                return racine;
-            }
-            valeur->capacity = capacity;
-            valeur->load = load;
-            valeur->power_plant = strdup("Unknown");
-
-            // Ajouter aux totaux globaux
-            total_capacity += capacity;
-            total_load += load;
-
-            // Insérer dans l'AVL
-            racine = inserer_avl(racine, cle, valeur);
-            if (DEBUG) printf("DEBUG: Insertion : Clé = '%s', Capacity = %ld, Load = %ld\n", cle, capacity, load);
-        }
+// Vérifier si la ligne contient des données valides
+if (capacity > 0 || load > 0) {
+    // Créer une nouvelle donnée pour l'AVL
+    Donnees *donnee = malloc(sizeof(Donnees));
+    if (!donnee) {
+        perror("Erreur d'allocation mémoire");
+        fclose(fichier);
+        return racine;
     }
 
-    printf("Total Capacity: %ld\n", total_capacity);
-    printf("Total Load: %ld\n", total_load);
+    donnee->station_type = strdup(station_type);
+    donnee->station_id = strdup(station_id);
+    donnee->total_capacity = capacity;
+    donnee->total_load = load;
+
+    // Insérer ou mettre à jour le nœud AVL
+    racine = inserer_avl(racine, station_id, donnee);
+}
+
+    }
 
     fclose(fichier);
     return racine;
@@ -100,12 +94,11 @@ NoeudAVL *charger_dat_dans_avl(const char *nom_fichier, const char *filter_type)
 void ecrire_avl(NoeudAVL *racine, FILE *fichier) {
     if (racine != NULL) {
         ecrire_avl(racine->gauche, fichier);
-        for (int i = 0; i < racine->taille; i++) {
-            fprintf(fichier, "%s;%ld;%ld\n", racine->cle, racine->valeurs[i]->capacity, racine->valeurs[i]->load);
-        }
+        fprintf(fichier, "%s;%ld;%ld\n", racine->cle, racine->valeurs[0]->total_capacity, racine->valeurs[0]->total_load);
         ecrire_avl(racine->droite, fichier);
     }
 }
+
 
 int generer_fichier_sortie(const char *nom_fichier, NoeudAVL *racine) {
     FILE *fichier = fopen(nom_fichier, "w");

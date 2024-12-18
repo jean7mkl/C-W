@@ -16,17 +16,26 @@ int main(int argc, char *argv[]) {
     }
 
     // Vérification du nombre d'arguments
-    if (argc != 5) {
-        fprintf(stderr, "Erreur : Nombre d'arguments incorrect : %d\n", argc);
-        fprintf(stderr, "Usage: %s <fichier_entree.dat> <fichier_sortie.dat> <has_header> <filter_type>\n", argv[0]);
-        return EXIT_FAILURE;
-    }
+    if (argc != 4) {
+    fprintf(stderr, "Erreur : Nombre d'arguments incorrect : %d\n", argc);
+    fprintf(stderr, "Usage: %s <fichier_entree.dat> <fichier_sortie.dat> <filter_type>\n", argv[0]);
+    return EXIT_FAILURE;
+   }
+
 
     // Récupération des arguments
     const char *fichier_entree = argv[1];
+    if (DEBUG) {
+    printf("DEBUG: fichier_entree = '%s'\n", fichier_entree);
+    }
+
     const char *fichier_sortie = argv[2];
-    int has_header = atoi(argv[3]);
-    const char *filter_type = argv[4];
+    //int has_header = atoi(argv[3]);
+    const char *filter_type = argv[3]; // Correct pour argc = 4
+    if (filter_type == NULL || strlen(filter_type) == 0) {
+    fprintf(stderr, "Erreur : Filter type est NULL ou vide.\n");
+    return EXIT_FAILURE;
+    }
 
     // Vérification des filtres interdits dans le nom de sortie
     if (strstr(fichier_sortie, "hvb_all") || strstr(fichier_sortie, "hvb_indiv") ||
@@ -51,6 +60,11 @@ int main(int argc, char *argv[]) {
     if (!arbre) {
         fprintf(stderr, "Erreur : L'arbre AVL est vide. Vérifiez le format du fichier d'entrée %s.\n", fichier_entree);
         return EXIT_FAILURE;
+    }
+     // Affichage du contenu de l'AVL pour le débogage
+    if (DEBUG) {
+        printf("DEBUG: Contenu de l'AVL après chargement :\n");
+        afficher_avl(arbre);
     }
 
     // Calcul des sommes pour Capacity et Load
