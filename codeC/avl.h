@@ -28,5 +28,8 @@ NoeudAVL *inserer_avl(NoeudAVL *racine, const char *cle, Donnees *valeur);
 void afficher_avl(NoeudAVL *racine);
 void liberer_avl(NoeudAVL *racine);
 long somme_avl(NoeudAVL *racine);
+long somme_loads(NoeudAVL *racine);
+long somme_loads(NoeudAVL *racine);
+
 
 #endif

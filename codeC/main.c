@@ -15,17 +15,20 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if (argc != 4) {
+    // Vérification du nombre d'arguments
+    if (argc != 5) {
         fprintf(stderr, "Erreur : Nombre d'arguments incorrect : %d\n", argc);
-        fprintf(stderr, "Usage: %s <fichier_entree.dat> <fichier_sortie.dat> <has_header>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <fichier_entree.dat> <fichier_sortie.dat> <has_header> <filter_type>\n", argv[0]);
         return EXIT_FAILURE;
     }
 
+    // Récupération des arguments
     const char *fichier_entree = argv[1];
     const char *fichier_sortie = argv[2];
     int has_header = atoi(argv[3]);
+    const char *filter_type = argv[4];
 
-    // Vérification des cas interdits
+    // Vérification des filtres interdits dans le nom de sortie
     if (strstr(fichier_sortie, "hvb_all") || strstr(fichier_sortie, "hvb_indiv") ||
         strstr(fichier_sortie, "hva_all") || strstr(fichier_sortie, "hva_indiv")) {
         fprintf(stderr, "Erreur : Cas interdit détecté dans les options de sortie (%s).\n", fichier_sortie);
@@ -34,28 +37,45 @@ int main(int argc, char *argv[]) {
 
     if (DEBUG) {
         printf("DEBUG: Chemin d'entrée : %s\n", fichier_entree);
+        printf("DEBUG: Filter type : %s\n", filter_type);
     }
 
+    // Vérification de l'accessibilité du fichier d'entrée
     if (access(fichier_entree, F_OK) != 0) {
         perror("Erreur : Le fichier d'entrée est inaccessible");
         return EXIT_FAILURE;
     }
 
-    NoeudAVL *arbre = charger_dat_dans_avl(fichier_entree, has_header);
+    // Chargement des données dans l'arbre AVL avec le filtre spécifié
+    NoeudAVL *arbre = charger_dat_dans_avl(fichier_entree, filter_type);
     if (!arbre) {
-        fprintf(stderr, "Erreur : Arbre AVL non généré\n");
+        fprintf(stderr, "Erreur : L'arbre AVL est vide. Vérifiez le format du fichier d'entrée %s.\n", fichier_entree);
         return EXIT_FAILURE;
     }
 
-    long somme = somme_avl(arbre);
-    printf("Consommation totale (Capacity) : %ld\n", somme);
+    // Calcul des sommes pour Capacity et Load
+    long somme_capacity = somme_avl(arbre);
+    long somme_load = somme_loads(arbre);
 
+    printf("Consommation totale (Capacity) : %ld\n", somme_capacity);
+    printf("Charge totale (Load) : %ld\n", somme_load);
+
+    // Génération du fichier de sortie
     if (!generer_fichier_sortie(fichier_sortie, arbre)) {
         fprintf(stderr, "Erreur : Impossible de générer le fichier de sortie\n");
         liberer_avl(arbre);
         return EXIT_FAILURE;
     }
 
+    if (access(fichier_sortie, F_OK) == 0) {
+        printf("Le fichier de sortie %s a été généré avec succès.\n", fichier_sortie);
+    } else {
+        fprintf(stderr, "Erreur : Le fichier de sortie n'existe pas.\n");
+        liberer_avl(arbre);
+        return EXIT_FAILURE;
+    }
+
+    // Libération de la mémoire
     liberer_avl(arbre);
     printf("Traitement terminé. Résultats enregistrés dans %s\n", fichier_sortie);
     return EXIT_SUCCESS;

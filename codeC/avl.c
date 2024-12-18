@@ -154,21 +154,43 @@ long somme_avl(NoeudAVL *racine) {
     return somme + somme_avl(racine->gauche) + somme_avl(racine->droite);
 }
 
+long somme_loads(NoeudAVL *racine) {
+    if (racine == NULL) return 0;
+    long somme = 0;
+    for (int i = 0; i < racine->taille; i++) {
+        somme += racine->valeurs[i]->load;
+    }
+    return somme + somme_loads(racine->gauche) + somme_loads(racine->droite);
+}
+
+
+// Fonction pour libérer un arbre AVL récursivement
 void liberer_avl(NoeudAVL *racine) {
     if (racine != NULL) {
         liberer_avl(racine->gauche);
         liberer_avl(racine->droite);
-        for (int i = 0; i < racine->taille; i++) {
-            free((char *)racine->valeurs[i]->power_plant);
-            free((char *)racine->valeurs[i]->hvb_station);
-            free((char *)racine->valeurs[i]->hva_station);
-            free((char *)racine->valeurs[i]->lv_station);
-            free((char *)racine->valeurs[i]->company);
-            free((char *)racine->valeurs[i]->individual);
-            free(racine->valeurs[i]);
+
+        if (racine->valeurs) {
+            for (int i = 0; i < racine->taille; i++) {
+                if (racine->valeurs[i]) {
+                    if (racine->valeurs[i]->power_plant) {
+                        free((char *)racine->valeurs[i]->power_plant);
+                        racine->valeurs[i]->power_plant = NULL;
+                    }
+                    free(racine->valeurs[i]);
+                    racine->valeurs[i] = NULL;
+                }
+            }
+            free(racine->valeurs);
+            racine->valeurs = NULL;
         }
-        free(racine->valeurs);
-        free((char *)racine->cle);
+
+        if (racine->cle) {
+            free((char *)racine->cle);
+            racine->cle = NULL;
+        }
+
         free(racine);
+        racine = NULL;
     }
 }

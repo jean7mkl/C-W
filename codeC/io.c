@@ -2,134 +2,121 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
-
-
+#include <ctype.h>
 #include "avl.h"
 
-#define DEBUG 1 // Activez ou désactivez les messages de débogage
+#define DEBUG 1
+
+long total_capacity = 0;
+long total_load = 0;
 
 
+// Replace '-' with '0'
+void RemplacerTiretParZero(char *ligne) {
+    for (int i = 0; ligne[i] != '\0'; i++) {
+        if (ligne[i] == '-') {
+            ligne[i] = '0';
+        }
+    }
+}
 
-NoeudAVL *charger_dat_dans_avl(const char *nom_fichier, int has_header) {
-    if (access(nom_fichier, F_OK) != 0) {
-    perror("Erreur d'accès au fichier");
-    fprintf(stderr, "DEBUG: Le fichier est inaccessible ou n'existe pas : %s\n", nom_fichier);
-    return NULL;
-  }
-
+// Fonction pour charger le fichier dans un arbre AVL avec un filtre spécifique
+NoeudAVL *charger_dat_dans_avl(const char *nom_fichier, const char *filter_type) {
     FILE *fichier = fopen(nom_fichier, "r");
     if (!fichier) {
-    perror("Erreur lors de l'ouverture du fichier d'entrée");
-    fprintf(stderr, "DEBUG: Fichier tenté : %s\n", nom_fichier);
-    return NULL;
-  }
+        perror("Erreur d'ouverture du fichier d'entrée");
+        return NULL;
+    }
 
-    fprintf(stderr, "DEBUG: Fichier ouvert avec succès : %s\n", nom_fichier);
-
-
-    char ligne[1024]; // Augmenté la taille pour gérer des lignes plus longues
+    char ligne[1024];
     NoeudAVL *racine = NULL;
 
-    // Ignore la première ligne si has_header est vrai
-    if (has_header) {
-        if (fgets(ligne, sizeof(ligne), fichier) == NULL) {
-            fprintf(stderr, "Erreur : Fichier vide ou lecture échouée\n");
-            fclose(fichier);
-            return NULL;
-        }
-        if (DEBUG) printf("DEBUG: Première ligne ignorée : %s\n", ligne);
-    }
+    /*if (has_header) {
+        fgets(ligne, sizeof(ligne), fichier); // Ignorer l'en-tête
+        if (DEBUG) printf("DEBUG: En-tête ignoré : %s\n", ligne);
+    }*/
 
     while (fgets(ligne, sizeof(ligne), fichier)) {
-    printf("DEBUG: Ligne lue : %s\n", ligne);
+        RemplacerTiretParZero(ligne);
 
-        // Extraction des champs avec strtok
-        char *power_plant = strtok(ligne, ";");
-        char *hvb_station = strtok(NULL, ";");
-        char *hva_station = strtok(NULL, ";");
-        char *lv_station = strtok(NULL, ";");
-        char *company = strtok(NULL, ";");
-        char *individual = strtok(NULL, ";");
-        char *capacity_str = strtok(NULL, ";");
-        char *load_str = strtok(NULL, "\n");
+        char cle[256] = {0};
+        long capacity = 0, load = 0;
+        int champs_extraits = 0;
 
-        // Validation des champs
-        if (!power_plant || !hvb_station || !hva_station || !lv_station ||
-            !company || !individual || !capacity_str || !load_str) {
-            fprintf(stderr, "DEBUG: Ligne ignorée - Champs manquants ou invalides : %s\n", ligne);
+        // Appliquer le filtre en fonction du type
+        if (strcmp(filter_type, "hvb comp") == 0) {
+            champs_extraits = sscanf(ligne, "%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
+        } else if (strcmp(filter_type, "hva comp") == 0) {
+            champs_extraits = sscanf(ligne, "%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
+        } else if (strcmp(filter_type, "lv comp") == 0) {
+            champs_extraits = sscanf(ligne, "%*[^;];%*[^;];%*[^;];%255[^;];%*[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
+        } else if (strcmp(filter_type, "company") == 0) {
+            champs_extraits = sscanf(ligne, "%*[^;];%*[^;];%*[^;];%*[^;];%255[^;];%*[^;];%ld;%ld", cle, &capacity, &load);
+        } else {
+            fprintf(stderr, "DEBUG: Type de filtre inconnu : %s\n", filter_type);
             continue;
         }
 
-        // Conversion des champs numériques
-        if (strcmp(capacity_str, "-") == 0) capacity_str = "0";
-        if (strcmp(load_str, "-") == 0) load_str = "0";
-
-        long capacity = atol(capacity_str);
-        long load = atol(load_str);
-
-        if (capacity < 0 || load < 0) {
-            fprintf(stderr, "DEBUG: Ligne ignorée - Valeurs numériques invalides\n");
-            continue;
+        if (DEBUG) {
+            printf("DEBUG: Ligne = %s\n", ligne);
+            printf("DEBUG: Champs extraits = %d, Clé = '%s', Capacity = %ld, Load = %ld\n", 
+                   champs_extraits, cle, capacity, load);
         }
 
-        // Allocation mémoire pour les données
-        Donnees *donnees = (Donnees *)malloc(sizeof(Donnees));
-        donnees->power_plant = strdup(power_plant);
-        donnees->hvb_station = strdup(hvb_station);
-        donnees->hva_station = strdup(hva_station);
-        donnees->lv_station = strdup(lv_station);
-        donnees->company = strdup(company);
-        donnees->individual = strdup(individual);
-        donnees->capacity = capacity;
-        donnees->load = load;
+        // Inclure uniquement les lignes avec des valeurs significatives
+        if (champs_extraits >= 3 && (capacity != 0 || load != 0)) {
+            // Créer une nouvelle entrée pour l'AVL
+            Donnees *valeur = (Donnees *)malloc(sizeof(Donnees));
+            if (!valeur) {
+                perror("Erreur d'allocation mémoire");
+                fclose(fichier);
+                return racine;
+            }
+            valeur->capacity = capacity;
+            valeur->load = load;
+            valeur->power_plant = strdup("Unknown");
 
-        if (DEBUG) printf("DEBUG: Insertion dans l'arbre AVL pour la clé : %s\n", power_plant);
-        racine = inserer_avl(racine, power_plant, donnees);
+            // Ajouter aux totaux globaux
+            total_capacity += capacity;
+            total_load += load;
+
+            // Insérer dans l'AVL
+            racine = inserer_avl(racine, cle, valeur);
+            if (DEBUG) printf("DEBUG: Insertion : Clé = '%s', Capacity = %ld, Load = %ld\n", cle, capacity, load);
+        }
     }
+
+    printf("Total Capacity: %ld\n", total_capacity);
+    printf("Total Load: %ld\n", total_load);
 
     fclose(fichier);
-
-    if (!racine) {
-        fprintf(stderr, "Erreur : L'arbre AVL est vide après le traitement des données.\n");
-    }
-
     return racine;
 }
+
+
+
 
 
 void ecrire_avl(NoeudAVL *racine, FILE *fichier) {
     if (racine != NULL) {
         ecrire_avl(racine->gauche, fichier);
         for (int i = 0; i < racine->taille; i++) {
-            fprintf(fichier, "%s;%s;%s;%s;%s;%s;%ld;%ld\n",
-                    racine->cle,
-                    racine->valeurs[i]->hvb_station,
-                    racine->valeurs[i]->hva_station,
-                    racine->valeurs[i]->lv_station,
-                    racine->valeurs[i]->company,
-                    racine->valeurs[i]->individual,
-                    racine->valeurs[i]->capacity,
-                    racine->valeurs[i]->load);
+            fprintf(fichier, "%s;%ld;%ld\n", racine->cle, racine->valeurs[i]->capacity, racine->valeurs[i]->load);
         }
         ecrire_avl(racine->droite, fichier);
     }
 }
 
 int generer_fichier_sortie(const char *nom_fichier, NoeudAVL *racine) {
-    if (DEBUG) printf("DEBUG: Ouverture du fichier de sortie : %s\n", nom_fichier);
     FILE *fichier = fopen(nom_fichier, "w");
     if (!fichier) {
-        perror("Erreur d'ouverture du fichier");
+        perror("Erreur d'ouverture du fichier de sortie");
         return 0;
     }
 
-    fprintf(fichier, "Power plant;HV-B Station;HV-A Station;LV Station;Company;Individual;Capacity;Load\n");
-    if (DEBUG) printf("DEBUG: En-tête écrit dans le fichier de sortie.\n");
-
+    fprintf(fichier, "Key;Capacity;Load\n");
     ecrire_avl(racine, fichier);
 
     fclose(fichier);
-    if (DEBUG) printf("DEBUG: Fichier de sortie fermé.\n");
     return 1;
 }
