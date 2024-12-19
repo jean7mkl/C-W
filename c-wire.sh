@@ -1,14 +1,36 @@
 #!/bin/bash
 
-# Aide utilisateur
-if [[ "$1" == "--help" || "$1" == "-h" ]]; then
-    echo "Usage: $0 <chemin_dat> <type_station> <type_consommateur> [<id_centrale>] [OPTIONS]"
-    echo "OPTIONS :"
-    echo "  --sort             Trier les données filtrées par capacité décroissante."
-    echo "  --keep-tmp         Ne pas supprimer les fichiers temporaires."
-    echo "  --debug            Activer les messages de débogage."
+# Fonction pour afficher le message d'aide
+function afficher_aide() {
+    echo ""
+    echo "Commande à saisir :"
+    echo "$0 <chemin_dat> <type_station> <type_consommateur> [<id_centrale>] [OPTIONS]"
+    echo ""
+    echo "Stations disponibles :"
+    echo "  - hvb (High Voltage B)"
+    echo "  - hva (High Voltage A)"
+    echo "  - lv  (Low Voltage)"
+    echo ""
+    echo "Consommateurs disponibles :"
+    echo "  - comp  (entreprises)"
+    echo "  - indiv (particuliers)"
+    echo "  - all   (tous)"
+    echo ""
+    echo "Options :"
+    echo "  --sort     : Trier les données par capacité décroissante."
+    echo "  --keep-tmp : Ne pas supprimer les fichiers temporaires."
+    echo "  --debug    : Afficher les messages de débogage."
+    echo ""
+    echo "Exemple :"
+    echo "$0 c-wire_v00.dat lv all --sort"
     exit 0
+}
+
+# Gestion de l'option -h
+if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+    afficher_aide
 fi
+
 
 # Chronométrage global
 START_TIME=$(date +%s)
@@ -121,24 +143,50 @@ case "$arg_fus" in
 	;;
 	"lv all")
     echo "ID centrale utilisé : $id_centrale"
-	if [ -z "$id_centrale" ]; then
-		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-		usagers_1=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
-		usagers_2=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
-		filtre_type="lv"
-	else
-		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-		usagers_1=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
-		usagers_2=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
-		filtre_type="lv"
-	fi
-	usagers="$usagers_1$'\n'$usagers_2"
-	;;
+    if [ -z "$id_centrale" ]; then
+        station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
+        usagers_1=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
+        usagers_2=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+        filtre_type="lv"
+    else
+        station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
+        usagers_1=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
+        usagers_2=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+        filtre_type="lv"
+    fi
+    usagers="$usagers_1"$'\n'"$usagers_2"
+    echo -e "$station\n$usagers" > "$fichier_filtre"
+
+    # Traitement pour lv all minmax
+sort -t';' -k7,7nr "$fichier_filtre" > tmp/sorted.txt
+head -n 10 tmp/sorted.txt > tmp/top10.txt
+tail -n 10 tmp/sorted.txt > tmp/bottom10.txt
+cat tmp/top10.txt tmp/bottom10.txt > tmp/lv_all_minmax.txt
+echo "Fichier lv_all_minmax généré : tmp/lv_all_minmax.txt"
+
+# Transformer lv_all_minmax.dat en lv_all_minmax.csv
+awk -F';' '{
+    # Remplacement des valeurs manquantes par 0
+    capacity = ($7 != "-" ? $7 : 0);
+    load = ($8 != "-" ? $8 : 0);
+    # Calcul de la consommation en trop
+    excess = (load > capacity ? load - capacity : 0);
+    # Génération de la ligne formatée
+    printf "%s---%s-%s-%s:%s:%s:%s\n", $1, $2, $3, $4, capacity, load, excess;
+}' output/lv_all_minmax.dat > output/lv_all_minmax.csv
+
+
+;;
 	*)
 	echo "Erreur : mode $arg_fus non pris en charge."
 	exit -1
 esac
+    echo "DEBUG: Contenu de station :"
+    echo "$station"
+    echo "DEBUG: Contenu de usagers :"
+    echo "$usagers"
     echo -e "$station\n$usagers" > "$fichier_filtre"
+
    	
 
 # Vérification si le fichier filtré est vide
@@ -185,6 +233,17 @@ mkdir -p output
 mv "$output_file_abs" "output/output_${type_station}_${type_consommateur}.dat"
 echo "Résultats enregistrés dans output/output_${type_station}_${type_consommateur}.dat"
 
+
+# Gestion spécifique pour lv all minmax
+if [[ "$type_station" == "lv" && "$type_consommateur" == "all" ]]; then
+    output_minmax="output/lv_all_minmax.dat"
+    if [[ -f tmp/lv_all_minmax.txt ]]; then
+        mv tmp/lv_all_minmax.txt "$output_minmax"
+        echo "Résultats minmax enregistrés dans $output_minmax"
+    fi
+fi
+
+
 # Nettoyage si demandé
 if [[ "$keep_tmp" == false ]]; then
     rm -rf tmp
@@ -194,3 +253,4 @@ fi
 END_TIME=$(date +%s)
 ELAPSED=$((END_TIME - START_TIME))
 echo "Temps total : $ELAPSED secondes."
+
