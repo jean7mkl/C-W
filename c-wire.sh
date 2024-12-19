@@ -96,84 +96,95 @@ case "$arg_fus" in
 	"hvb comp")
     echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
-		station=$(grep  -P "^(\d+);(\d+);-;-;-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^(\d+);(\d+);-;-;(\d+);-;-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^(\d+);(\d+);-;-;-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^(\d+);(\d+);-;-;(\d+);-;-;(\d+)" "$chemin_dat")
 		filtre_type="hvb"
 	else
-		station=$(grep  -P "^($id_centrale);(\d+);-;-;-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^($id_centrale);(\d+);-;-;(\d+);-;-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^($id_centrale);(\d+);-;-;-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^($id_centrale);(\d+);-;-;(\d+);-;-;(\d+)" "$chemin_dat")
 		filtre_type="hvb"
 	fi
 	;;
 	"hva comp")
     echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
-		station=$(grep  -P "^(\d+);(\d+);(\d+);-;-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^(\d+);-;(\d+);-;(\d+);-;-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^(\d+);(\d+);(\d+);-;-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^(\d+);-;(\d+);-;(\d+);-;-;(\d+)" "$chemin_dat")
 		filtre_type="hva"
 	else
-		station=$(grep  -P "^($id_centrale);(\d+);(\d+);-;-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^($id_centrale);-;(\d+);-;(\d+);-;-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^($id_centrale);(\d+);(\d+);-;-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^($id_centrale);-;(\d+);-;(\d+);-;-;(\d+)" "$chemin_dat")
 		filtre_type="hva"
 	fi
 	;;
 	"lv comp")
     echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
-		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" "$chemin_dat")
 		filtre_type="lv"
 	else
-		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" "$chemin_dat")
 		filtre_type="lv"
 	fi
 	;;
 	"lv indiv")
     echo "ID centrale utilisé : $id_centrale"
 	if [ -z "$id_centrale" ]; then
-		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" "$chemin_dat")
 		filtre_type="lv"
 	else 
-		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-		usagers=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+		station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" "$chemin_dat")
+		usagers=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" "$chemin_dat")
 		filtre_type="lv"
 	fi
 	;;
 	"lv all")
     echo "ID centrale utilisé : $id_centrale"
     if [ -z "$id_centrale" ]; then
-        station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-        usagers_1=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
-        usagers_2=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+        station=$(grep  -P "^(\d+);-;(\d+);(\d+);-;-;(\d+);-" "$chemin_dat")
+        usagers_1=$(grep  -P "^(\d+);-;-;(\d+);(\d+);-;-;(\d+)" "$chemin_dat")
+        usagers_2=$(grep  -P "^(\d+);-;-;(\d+);-;(\d+);-;(\d+)" "$chemin_dat")
         filtre_type="lv"
     else
-        station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" $chemin_dat)
-        usagers_1=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" $chemin_dat)
-        usagers_2=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" $chemin_dat)
+        station=$(grep  -P "^($id_centrale);-;(\d+);(\d+);-;-;(\d+);-" "$chemin_dat")
+        usagers_1=$(grep  -P "^($id_centrale);-;-;(\d+);(\d+);-;-;(\d+)" "$chemin_dat")
+        usagers_2=$(grep  -P "^($id_centrale);-;-;(\d+);-;(\d+);-;(\d+)" "$chemin_dat")
         filtre_type="lv"
     fi
     usagers="$usagers_1"$'\n'"$usagers_2"
     echo -e "$station\n$usagers" > "$fichier_filtre"
 
-    # Traitement pour lv all minmax
-sort -t';' -k7,7nr "$fichier_filtre" > tmp/sorted.txt
+ # Préparation des répertoires nécessaires
+mkdir -p tmp
+mkdir -p output
+
+# Utilisation du fichier généré par le programme C pour le tri
+# Tri par capacité décroissante (colonne 2)
+tail -n +2 output/output_lv_all.dat | sort -t';' -k2,2nr > tmp/sorted.txt
+
+# Extraction des 10 plus grandes et 10 plus petites valeurs
 head -n 10 tmp/sorted.txt > tmp/top10.txt
 tail -n 10 tmp/sorted.txt > tmp/bottom10.txt
+
+# Fusion des deux fichiers pour créer tmp/lv_all_minmax.txt
 cat tmp/top10.txt tmp/bottom10.txt > tmp/lv_all_minmax.txt
 echo "Fichier lv_all_minmax généré : tmp/lv_all_minmax.txt"
 
-# Transformer lv_all_minmax.dat en lv_all_minmax.csv
+# Transformation de tmp/lv_all_minmax.txt en fichier CSV
 awk -F';' '{
-    # Remplacement des valeurs manquantes par 0
-    capacity = ($7 != "-" ? $7 : 0);
-    load = ($8 != "-" ? $8 : 0);
+    # Remplacement des valeurs manquantes "-" par 0
+    capacity = ($2 != "-" ? $2 : 0);  # Colonne Capacité
+    load = ($3 != "-" ? $3 : 0);      # Colonne Consommation totale
     # Calcul de la consommation en trop
     excess = (load > capacity ? load - capacity : 0);
-    # Génération de la ligne formatée
-    printf "%s---%s-%s-%s:%s:%s:%s\n", $1, $2, $3, $4, capacity, load, excess;
-}' output/lv_all_minmax.dat > output/lv_all_minmax.csv
+    # Génération de la ligne formatée pour le CSV
+    printf "%s---Station:%s:%s:%s\n", $1, capacity, load, excess;
+}' tmp/lv_all_minmax.txt > output/lv_all_minmax.csv
+
+echo "Le fichier CSV final a été généré : output/lv_all_minmax.csv"
 
 
 ;;
@@ -245,9 +256,21 @@ fi
 
 
 # Nettoyage si demandé
-if [[ "$keep_tmp" == false ]]; then
-    rm -rf tmp
+#if [[ "$keep_tmp" == false ]]; then
+  #  rm -rf tmp
+#fi
+
+# Nettoyage des répertoires temporaires dans codeC
+if [ -d "codeC/tmp" ]; then
+    rm -rf codeC/tmp
+    echo "Répertoire 'codeC/tmp' supprimé."
 fi
+
+if [ -d "codeC/output" ]; then
+    rm -rf codeC/output
+    echo "Répertoire 'codeC/output' supprimé."
+fi
+
 
 # Temps total d'exécution
 END_TIME=$(date +%s)
