@@ -42,7 +42,15 @@ if [[ $# -lt 3 ]]; then
     exit 1
 fi
 
-chemin_dat=$(realpath "$1")
+# Gestion du chemin d'entrée pour le fichier .dat
+if [[ -f "$1" ]]; then
+    chemin_dat=$(realpath "$1")
+elif [[ -f "input/$1" ]]; then
+    chemin_dat=$(realpath "input/$1")
+else
+    echo "Erreur : Le fichier $1 n'existe ni dans le répertoire courant ni dans input/"
+    exit 1
+fi
 type_station="$2"
 type_consommateur="$3"
 shift 3
