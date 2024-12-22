@@ -1,3 +1,5 @@
+Projet informatique du premier semestre de Pré-ing 2. 
+
 1-Placer le dossier C-wire dans votre dossier personnel et placer votre fichier au format .csv à traiter, dans le fichier input de C-wire (1 seule fichier au format .csv à traiter)
 
 2-Ouvrir le terminal, lancer le script c-wire.sh en utilisant : ./C-wire/c-wire.sh <type de station à traiter> <type de consommateur à traiter> <facultatif: Identifiant de centrale (nombre entier)>
